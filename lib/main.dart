@@ -22,6 +22,19 @@ class _HomeState extends State<Home> {
 
   List _toDoList = [];
 
+  @override
+  void initState() {
+    super.initState();
+
+    _readData().then(
+      (data) => setState(
+        () {
+          _toDoList = json.decode(data!);
+        },
+      ),
+    );
+  }
+
   void _addToDo() {
     setState(() {
       Map<String, dynamic> newToDo = Map();
@@ -29,6 +42,7 @@ class _HomeState extends State<Home> {
       _toDoController.text = "";
       newToDo["ok"] = false;
       _toDoList.add(newToDo);
+      _saveData();
     });
   }
 
@@ -50,6 +64,33 @@ class _HomeState extends State<Home> {
     } catch (e) {
       return null;
     }
+  }
+
+  Widget buildItem(context, index) {
+    return Dismissible(
+      key: Key("$index"),
+      child: CheckboxListTile(
+        title: Text(_toDoList[index]["title"]),
+        onChanged: (value) {
+          setState(() {
+            _toDoList[index]["ok"] = value;
+            _saveData();
+          });
+        },
+        value: _toDoList[index]["ok"],
+        secondary: CircleAvatar(
+          child: Icon(_toDoList[index]["ok"] ? Icons.check : Icons.error),
+        ),
+      ),
+      direction: DismissDirection.startToEnd,
+      background: Container(
+        color: Colors.red,
+        child: Align(
+          alignment: Alignment(-0.9, 0.0),
+          child: Icon(Icons.delete, color: Colors.white),
+        ),
+      ),
+    );
   }
 
   @override
@@ -82,25 +123,11 @@ class _HomeState extends State<Home> {
             ),
           ),
           Expanded(
-              child: ListView.builder(
-            padding: EdgeInsets.only(top: 10.0),
-            itemCount: _toDoList.length,
-            itemBuilder: (context, index) {
-              return CheckboxListTile(
-                title: Text(_toDoList[index]["title"]),
-                onChanged: (value) {
-                  setState(() {
-                    _toDoList[index]["ok"] = value;
-                  });
-                },
-                value: _toDoList[index]["ok"],
-                secondary: CircleAvatar(
-                  child:
-                      Icon(_toDoList[index]["ok"] ? Icons.check : Icons.error),
-                ),
-              );
-            },
-          ))
+            child: ListView.builder(
+                padding: EdgeInsets.only(top: 10.0),
+                itemCount: _toDoList.length,
+                itemBuilder: buildItem),
+          )
         ],
       ),
     );
